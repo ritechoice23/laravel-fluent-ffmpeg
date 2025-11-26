@@ -16,9 +16,7 @@ class HlsExporter
 
     protected ?string $keyInfoPath = null;
 
-    public function __construct(protected FFmpegBuilder $builder)
-    {
-    }
+    public function __construct(protected FFmpegBuilder $builder) {}
 
     /**
      * Add a format to the HLS export
