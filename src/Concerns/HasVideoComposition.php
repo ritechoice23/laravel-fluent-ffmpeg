@@ -72,24 +72,24 @@ trait HasVideoComposition
         $intro = $intro ?? $this->introPath;
         $outro = $outro ?? $this->outroPath;
 
-        if (!$intro && !$outro) {
+        if (! $intro && ! $outro) {
             copy($videoPath, $outputPath);
 
             return;
         }
 
         $inputs = [];
-        $fileList = sys_get_temp_dir() . '/' . uniqid('concat_') . '_list.txt';
+        $fileList = sys_get_temp_dir().'/'.uniqid('concat_').'_list.txt';
 
         // Build concat list
         if ($intro) {
-            $inputs[] = "file '" . str_replace("'", "'\\''", realpath($intro)) . "'";
+            $inputs[] = "file '".str_replace("'", "'\\''", realpath($intro))."'";
         }
 
-        $inputs[] = "file '" . str_replace("'", "'\\''", realpath($videoPath)) . "'";
+        $inputs[] = "file '".str_replace("'", "'\\''", realpath($videoPath))."'";
 
         if ($outro) {
-            $inputs[] = "file '" . str_replace("'", "'\\''", realpath($outro)) . "'";
+            $inputs[] = "file '".str_replace("'", "'\\''", realpath($outro))."'";
         }
 
         file_put_contents($fileList, implode("\n", $inputs));
@@ -114,7 +114,7 @@ trait HasVideoComposition
         $watermark = $watermark ?? $this->watermarkPath;
         $position = $position ?? $this->watermarkPosition;
 
-        if (!$watermark) {
+        if (! $watermark) {
             copy($videoPath, $outputPath);
 
             return;
@@ -148,7 +148,7 @@ trait HasVideoComposition
         $hasWatermark = $this->watermarkPath !== null;
 
         // No composition needed
-        if (!$hasIntro && !$hasOutro && !$hasWatermark) {
+        if (! $hasIntro && ! $hasOutro && ! $hasWatermark) {
             if ($inputPath !== $outputPath) {
                 copy($inputPath, $outputPath);
             }
@@ -160,7 +160,7 @@ trait HasVideoComposition
 
         // Step 1: Add intro/outro
         if ($hasIntro || $hasOutro) {
-            $tempWithIntroOutro = sys_get_temp_dir() . '/' . uniqid('composed_') . '_temp.mp4';
+            $tempWithIntroOutro = sys_get_temp_dir().'/'.uniqid('composed_').'_temp.mp4';
             $this->addIntroOutro($tempFile, $tempWithIntroOutro);
 
             if ($tempFile !== $inputPath) {

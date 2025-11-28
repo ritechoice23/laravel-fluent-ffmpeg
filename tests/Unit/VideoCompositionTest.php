@@ -5,32 +5,32 @@ use Ritechoice23\FluentFFmpeg\Facades\FFmpeg;
 beforeEach(function () {
     // Use actual test assets from package root
     $packageRoot = dirname(__DIR__, 2);
-    $this->testVideo = $packageRoot . '/assets/test-clip.mp4';
-    $this->testIntro = $packageRoot . '/assets/test-clip.mp4'; // Reuse same video as intro
-    $this->testOutro = $packageRoot . '/assets/test-clip.mp4'; // Reuse same video as outro
-    $this->testWatermark = $packageRoot . '/assets/thumbnail.png';
+    $this->testVideo = $packageRoot.'/assets/test-clip.mp4';
+    $this->testIntro = $packageRoot.'/assets/test-clip.mp4'; // Reuse same video as intro
+    $this->testOutro = $packageRoot.'/assets/test-clip.mp4'; // Reuse same video as outro
+    $this->testWatermark = $packageRoot.'/assets/thumbnail.png';
 
     // Ensure test directory exists for outputs
-    $testDir = $packageRoot . '/storage/framework/testing';
+    $testDir = $packageRoot.'/storage/framework/testing';
     @mkdir($testDir, 0755, true);
 });
 
 afterEach(function () {
     // Clean up test outputs
     $packageRoot = dirname(__DIR__, 2);
-    $outputs = glob($packageRoot . '/storage/framework/testing/composed*.mp4');
+    $outputs = glob($packageRoot.'/storage/framework/testing/composed*.mp4');
     foreach ($outputs as $output) {
         @unlink($output);
     }
 });
 
 test('can add intro to video', function () {
-    if (!file_exists($this->testVideo) || !file_exists($this->testIntro)) {
+    if (! file_exists($this->testVideo) || ! file_exists($this->testIntro)) {
         $this->markTestSkipped('Test files not found');
     }
 
     $packageRoot = dirname(__DIR__, 2);
-    $output = $packageRoot . '/storage/framework/testing/composed-with-intro.mp4';
+    $output = $packageRoot.'/storage/framework/testing/composed-with-intro.mp4';
 
     $result = FFmpeg::fromPath($this->testVideo)
         ->withIntro($this->testIntro)
@@ -49,12 +49,12 @@ test('can add intro to video', function () {
 });
 
 test('can add outro to video', function () {
-    if (!file_exists($this->testVideo) || !file_exists($this->testOutro)) {
+    if (! file_exists($this->testVideo) || ! file_exists($this->testOutro)) {
         $this->markTestSkipped('Test files not found');
     }
 
     $packageRoot = dirname(__DIR__, 2);
-    $output = $packageRoot . '/storage/framework/testing/composed-with-outro.mp4';
+    $output = $packageRoot.'/storage/framework/testing/composed-with-outro.mp4';
 
     $result = FFmpeg::fromPath($this->testVideo)
         ->withOutro($this->testOutro)
@@ -67,12 +67,12 @@ test('can add outro to video', function () {
 });
 
 test('can add watermark to video', function () {
-    if (!file_exists($this->testVideo) || !file_exists($this->testWatermark)) {
+    if (! file_exists($this->testVideo) || ! file_exists($this->testWatermark)) {
         $this->markTestSkipped('Test files not found');
     }
 
     $packageRoot = dirname(__DIR__, 2);
-    $output = $packageRoot . '/storage/framework/testing/composed-with-watermark.mp4';
+    $output = $packageRoot.'/storage/framework/testing/composed-with-watermark.mp4';
 
     $result = FFmpeg::fromPath($this->testVideo)
         ->withWatermark($this->testWatermark, 'bottom-right')
@@ -86,14 +86,14 @@ test('can add watermark to video', function () {
 
 test('can combine intro outro and watermark', function () {
     if (
-        !file_exists($this->testVideo) || !file_exists($this->testIntro) ||
-        !file_exists($this->testOutro) || !file_exists($this->testWatermark)
+        ! file_exists($this->testVideo) || ! file_exists($this->testIntro) ||
+        ! file_exists($this->testOutro) || ! file_exists($this->testWatermark)
     ) {
         $this->markTestSkipped('Test files not found');
     }
 
     $packageRoot = dirname(__DIR__, 2);
-    $output = $packageRoot . '/storage/framework/testing/composed-full.mp4';
+    $output = $packageRoot.'/storage/framework/testing/composed-full.mp4';
 
     $result = FFmpeg::fromPath($this->testVideo)
         ->withIntro($this->testIntro)
@@ -108,7 +108,7 @@ test('can combine intro outro and watermark', function () {
 });
 
 test('composition works with clips', function () {
-    if (!file_exists($this->testVideo) || !file_exists($this->testWatermark)) {
+    if (! file_exists($this->testVideo) || ! file_exists($this->testWatermark)) {
         $this->markTestSkipped('Test files not found');
     }
 
@@ -119,7 +119,7 @@ test('composition works with clips', function () {
             ['start' => '00:00:03', 'end' => '00:00:05'],
         ])
         ->withWatermark($this->testWatermark)
-        ->save($packageRoot . '/storage/framework/testing/composed-clip.mp4');
+        ->save($packageRoot.'/storage/framework/testing/composed-clip.mp4');
 
     expect($outputs)->toBeArray();
     expect($outputs)->toHaveCount(2);
@@ -131,7 +131,7 @@ test('composition works with clips', function () {
 });
 
 test('composition applies to all clips individually', function () {
-    if (!file_exists($this->testVideo) || !file_exists($this->testWatermark)) {
+    if (! file_exists($this->testVideo) || ! file_exists($this->testWatermark)) {
         $this->markTestSkipped('Test files not found');
     }
 
@@ -142,7 +142,7 @@ test('composition applies to all clips individually', function () {
             ['start' => '00:00:02', 'end' => '00:00:03'],
         ])
         ->withWatermark($this->testWatermark)
-        ->save($packageRoot . '/storage/framework/testing/composed-clip.mp4');
+        ->save($packageRoot.'/storage/framework/testing/composed-clip.mp4');
 
     expect($outputs)->toHaveCount(2);
 
@@ -154,12 +154,12 @@ test('composition applies to all clips individually', function () {
 });
 
 test('applyComposition does nothing if no composition set', function () {
-    if (!file_exists($this->testVideo)) {
+    if (! file_exists($this->testVideo)) {
         $this->markTestSkipped('Test video not found');
     }
 
     $packageRoot = dirname(__DIR__, 2);
-    $output = $packageRoot . '/storage/framework/testing/no-composition.mp4';
+    $output = $packageRoot.'/storage/framework/testing/no-composition.mp4';
 
     $result = FFmpeg::fromPath($this->testVideo)
         ->save($output);

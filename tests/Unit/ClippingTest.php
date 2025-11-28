@@ -5,32 +5,32 @@ use Ritechoice23\FluentFFmpeg\Facades\FFmpeg;
 beforeEach(function () {
     // Use actual test assets from package root
     $packageRoot = dirname(__DIR__, 2);
-    $this->testVideo = $packageRoot . '/assets/test-clip.mp4';
-    $this->testIntro = $packageRoot . '/assets/test-clip.mp4'; // Reuse same video as intro
-    $this->testOutro = $packageRoot . '/assets/test-clip.mp4'; // Reuse same video as outro
-    $this->testWatermark = $packageRoot . '/assets/thumbnail.png';
+    $this->testVideo = $packageRoot.'/assets/test-clip.mp4';
+    $this->testIntro = $packageRoot.'/assets/test-clip.mp4'; // Reuse same video as intro
+    $this->testOutro = $packageRoot.'/assets/test-clip.mp4'; // Reuse same video as outro
+    $this->testWatermark = $packageRoot.'/assets/thumbnail.png';
 
     // Ensure test directory exists for outputs
-    $testDir = $packageRoot . '/storage/framework/testing';
+    $testDir = $packageRoot.'/storage/framework/testing';
     @mkdir($testDir, 0755, true);
 });
 
 afterEach(function () {
     // Clean up generated clips
     $packageRoot = dirname(__DIR__, 2);
-    $clips = glob($packageRoot . '/storage/framework/testing/clip*.mp4');
+    $clips = glob($packageRoot.'/storage/framework/testing/clip*.mp4');
     foreach ($clips as $clip) {
         @unlink($clip);
     }
 });
 
 test('can extract single clip', function () {
-    if (!file_exists($this->testVideo)) {
+    if (! file_exists($this->testVideo)) {
         $this->markTestSkipped('Test video not found');
     }
 
     $packageRoot = dirname(__DIR__, 2);
-    $output = $packageRoot . '/storage/framework/testing/clip.mp4';
+    $output = $packageRoot.'/storage/framework/testing/clip.mp4';
 
     $result = FFmpeg::fromPath($this->testVideo)
         ->clip('00:00:00', '00:00:05')
@@ -46,7 +46,7 @@ test('can extract single clip', function () {
 });
 
 test('can extract multiple clips with auto-numbering', function () {
-    if (!file_exists($this->testVideo)) {
+    if (! file_exists($this->testVideo)) {
         $this->markTestSkipped('Test video not found');
     }
 
@@ -56,7 +56,7 @@ test('can extract multiple clips with auto-numbering', function () {
             ['start' => '00:00:00', 'end' => '00:00:02'],
             ['start' => '00:00:03', 'end' => '00:00:05'],
         ])
-        ->save($packageRoot . '/storage/framework/testing/clip.mp4');
+        ->save($packageRoot.'/storage/framework/testing/clip.mp4');
 
     expect($outputs)->toBeArray();
     expect($outputs)->toHaveCount(2);
@@ -91,7 +91,7 @@ test('batch clips throw error if start/end missing', function () {
 })->throws(\InvalidArgumentException::class);
 
 test('can extract clips with different output pattern', function () {
-    if (!file_exists($this->testVideo)) {
+    if (! file_exists($this->testVideo)) {
         $this->markTestSkipped('Test video not found');
     }
 
@@ -101,7 +101,7 @@ test('can extract clips with different output pattern', function () {
             ['start' => '00:00:00', 'end' => '00:00:02'],
             ['start' => '00:00:03', 'end' => '00:00:05'],
         ])
-        ->save($packageRoot . '/storage/framework/testing/highlight.mp4');
+        ->save($packageRoot.'/storage/framework/testing/highlight.mp4');
 
     expect($outputs[0])->toContain('highlight_1.mp4');
     expect($outputs[1])->toContain('highlight_2.mp4');
@@ -112,12 +112,12 @@ test('can extract clips with different output pattern', function () {
 });
 
 test('single clip with composition applies all features', function () {
-    if (!file_exists($this->testVideo) || !file_exists($this->testWatermark)) {
+    if (! file_exists($this->testVideo) || ! file_exists($this->testWatermark)) {
         $this->markTestSkipped('Test files not found');
     }
 
     $packageRoot = dirname(__DIR__, 2);
-    $output = $packageRoot . '/storage/framework/testing/composed-clip.mp4';
+    $output = $packageRoot.'/storage/framework/testing/composed-clip.mp4';
 
     $result = FFmpeg::fromPath($this->testVideo)
         ->clip('00:00:00', '00:00:05')
@@ -131,7 +131,7 @@ test('single clip with composition applies all features', function () {
 });
 
 test('clips are processed sequentially', function () {
-    if (!file_exists($this->testVideo)) {
+    if (! file_exists($this->testVideo)) {
         $this->markTestSkipped('Test video not found');
     }
 
@@ -144,7 +144,7 @@ test('clips are processed sequentially', function () {
             ['start' => '00:00:02', 'end' => '00:00:03'],
             ['start' => '00:00:04', 'end' => '00:00:05'],
         ])
-        ->save($packageRoot . '/storage/framework/testing/clip.mp4');
+        ->save($packageRoot.'/storage/framework/testing/clip.mp4');
 
     $endTime = microtime(true);
     $duration = $endTime - $startTime;
@@ -158,7 +158,7 @@ test('clips are processed sequentially', function () {
 });
 
 test('save returns array for batch clips', function () {
-    if (!file_exists($this->testVideo)) {
+    if (! file_exists($this->testVideo)) {
         $this->markTestSkipped('Test video not found');
     }
 
@@ -167,7 +167,7 @@ test('save returns array for batch clips', function () {
         ->clips([
             ['start' => '00:00:00', 'end' => '00:00:02'],
         ])
-        ->save($packageRoot . '/storage/framework/testing/clip.mp4');
+        ->save($packageRoot.'/storage/framework/testing/clip.mp4');
 
     expect($result)->toBeArray();
 
@@ -177,12 +177,12 @@ test('save returns array for batch clips', function () {
 });
 
 test('save returns bool for single clip', function () {
-    if (!file_exists($this->testVideo)) {
+    if (! file_exists($this->testVideo)) {
         $this->markTestSkipped('Test video not found');
     }
 
     $packageRoot = dirname(__DIR__, 2);
-    $output = $packageRoot . '/storage/framework/testing/clip.mp4';
+    $output = $packageRoot.'/storage/framework/testing/clip.mp4';
 
     $result = FFmpeg::fromPath($this->testVideo)
         ->clip('00:00:00', '00:00:02')

@@ -25,9 +25,9 @@ class ExecuteFFmpegCommand
         array $inputs = []
     ): bool {
         // Ensure output directory exists before running FFmpeg
-        if ($outputPath && !$outputDisk) {
+        if ($outputPath && ! $outputDisk) {
             $outputDir = dirname($outputPath);
-            if (!is_dir($outputDir)) {
+            if (! is_dir($outputDir)) {
                 mkdir($outputDir, 0755, true);
             }
         }
@@ -61,7 +61,7 @@ class ExecuteFFmpegCommand
             });
 
             // Check if process was successful
-            if (!$process->isSuccessful()) {
+            if (! $process->isSuccessful()) {
                 $error = $process->getErrorOutput();
 
                 // Include stdout as well for better debugging
