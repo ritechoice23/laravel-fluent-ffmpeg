@@ -53,7 +53,7 @@ trait HasHelperMethods
     }
 
     /**
-     * Generate waveform visualization
+     * Generate waveform visualization from audio
      */
     public function waveform(array $options = []): self
     {
@@ -61,7 +61,24 @@ trait HasHelperMethods
         $height = $options['height'] ?? 1080;
         $color = $options['color'] ?? 'white';
 
-        $this->addFilter("showwavespic=s={$width}x{$height}:colors={$color}");
+        // Get the input file
+        $inputFile = $this->getInputs()[0] ?? null;
+
+        if (!$inputFile) {
+            throw new \RuntimeException('No input file specified. Use fromPath() first.');
+        }
+
+        // Escape file path for Windows
+        $escapedFile = str_replace('\\', '/', $inputFile);
+        $escapedFile = str_replace(':', '\\:', $escapedFile);
+
+        // Clear existing inputs and use lavfi with showwavespic
+        $this->inputs = [];
+        $this->inputOptions = [];
+        $this->addInputOption('f', 'lavfi');
+        $this->addInputOption('i', "amovie={$escapedFile},showwavespic=s={$width}x{$height}:colors={$color}");
+
+        // Output a single frame
         $this->addOutputOption('frames:v', 1);
 
         return $this;
@@ -75,7 +92,7 @@ trait HasHelperMethods
         if (is_string($preset)) {
             $presetConfig = config("fluent-ffmpeg.presets.{$preset}");
 
-            if (! $presetConfig) {
+            if (!$presetConfig) {
                 throw new \InvalidArgumentException("Preset '{$preset}' not found in configuration");
             }
         } else {
