@@ -14,8 +14,6 @@ trait HasFilters
         return $this;
     }
 
-
-
     /**
      * Crop video
      */
@@ -177,4 +175,3 @@ trait HasFilters
         return $this;
     }
 }
-

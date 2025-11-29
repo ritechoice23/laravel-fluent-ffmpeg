@@ -72,24 +72,24 @@ trait HasVideoComposition
         $intro = $intro ?? $this->introPath;
         $outro = $outro ?? $this->outroPath;
 
-        if (!$intro && !$outro) {
+        if (! $intro && ! $outro) {
             copy($videoPath, $outputPath);
 
             return;
         }
 
         $inputs = [];
-        $fileList = sys_get_temp_dir() . '/' . uniqid('concat_') . '_list.txt';
+        $fileList = sys_get_temp_dir().'/'.uniqid('concat_').'_list.txt';
 
         // Build concat list
         if ($intro) {
-            $inputs[] = "file '" . str_replace("'", "'\\''", realpath($intro)) . "'";
+            $inputs[] = "file '".str_replace("'", "'\\''", realpath($intro))."'";
         }
 
-        $inputs[] = "file '" . str_replace("'", "'\\''", realpath($videoPath)) . "'";
+        $inputs[] = "file '".str_replace("'", "'\\''", realpath($videoPath))."'";
 
         if ($outro) {
-            $inputs[] = "file '" . str_replace("'", "'\\''", realpath($outro)) . "'";
+            $inputs[] = "file '".str_replace("'", "'\\''", realpath($outro))."'";
         }
 
         file_put_contents($fileList, implode("\n", $inputs));
@@ -106,7 +106,6 @@ trait HasVideoComposition
         }
     }
 
-
     /**
      * Add watermark to a video
      */
@@ -115,7 +114,7 @@ trait HasVideoComposition
         $watermark = $watermark ?? $this->watermarkPath;
         $position = $position ?? $this->watermarkPosition;
 
-        if (!$watermark) {
+        if (! $watermark) {
             copy($videoPath, $outputPath);
 
             return;
@@ -150,7 +149,7 @@ trait HasVideoComposition
         $hasWatermark = $this->watermarkPath !== null;
 
         // No composition needed
-        if (!$hasIntro && !$hasOutro && !$hasWatermark) {
+        if (! $hasIntro && ! $hasOutro && ! $hasWatermark) {
             if ($inputPath !== $outputPath) {
                 copy($inputPath, $outputPath);
             }
@@ -162,7 +161,7 @@ trait HasVideoComposition
 
         // Step 1: Add intro/outro
         if ($hasIntro || $hasOutro) {
-            $tempWithIntroOutro = sys_get_temp_dir() . '/' . uniqid('composed_') . '_temp.mp4';
+            $tempWithIntroOutro = sys_get_temp_dir().'/'.uniqid('composed_').'_temp.mp4';
             $this->addIntroOutro($tempFile, $tempWithIntroOutro);
 
             if ($tempFile !== $inputPath) {
@@ -186,9 +185,8 @@ trait HasVideoComposition
 
     /**
      * Overlay video or image (Picture-in-Picture)
-     * 
-     * @param array $options Options with x, y, width, height positions
-     * @return self
+     *
+     * @param  array  $options  Options with x, y, width, height positions
      */
     public function overlay(array $options = []): self
     {
@@ -200,6 +198,7 @@ trait HasVideoComposition
         // If width/height specified, scale the overlay input (assumed to be the second input)
         if ($width && $height) {
             $this->addFilter("[1:v]scale={$width}:{$height}[overlay]");
+
             // Overlay it on the main input
             return $this->addFilter("[0:v][overlay]overlay={$x}:{$y}");
         }
@@ -210,13 +209,12 @@ trait HasVideoComposition
 
     /**
      * Concatenate multiple videos
-     * 
-     * @param array $inputs Additional input files to concatenate
-     * @return self
+     *
+     * @param  array  $inputs  Additional input files to concatenate
      */
     public function concat(array $inputs = []): self
     {
-        if (!empty($inputs)) {
+        if (! empty($inputs)) {
             foreach ($inputs as $input) {
                 $this->addInput($input);
             }
