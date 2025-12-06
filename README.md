@@ -72,12 +72,30 @@ FFmpeg::fromPath('video.mp4')
     ->withOutro('outro.mp4')
     ->withWatermark('logo.png', 'bottom-right')
     ->save('branded.mp4');
+
+// Process all videos in a directory
+FFmpeg::fromDirectory('/path/to/videos')
+    ->resize(1920, 1080)
+    ->withWatermark('logo.png', 'top-right')
+    ->save('/path/to/output/');
+
+// Add text overlay
+FFmpeg::fromPath('video.mp4')
+    ->withText('Copyright 2024', [
+        'position' => 'bottom-right',
+        'font_size' => 24,
+        'font_color' => 'white',
+        'background_color' => 'black@0.5',
+    ])
+    ->save('output.mp4');
 ```
 
 ## Features
 
 -   **Fluent API** - Chainable, expressive syntax
 -   **Multi-Clip Extraction** - Extract multiple clips with auto-numbering
+-   **Directory Processing** - Process multiple files from a directory
+-   **Text Overlay** - Add styled text with positioning and timing
 -   **Video Composition** - Add intro, outro, and watermarks to clips
 -   **20+ Filters** - Effects, transformations, overlays
 -   **Multiple Formats** - MP4, HLS, DASH, GIF, and more
@@ -93,6 +111,8 @@ FFmpeg::fromPath('video.mp4')
 
 -   [Installation & Configuration](docs/installation.md)
 -   [Basic Usage](docs/basic-usage.md)
+-   [Directory Processing](docs/directory-processing.md) - Process multiple files from a directory
+-   [Text Overlay](docs/text-overlay.md) - Add styled text to videos
 -   [Clipping](docs/clipping.md) - Extract single or multiple video clips
 -   [Video Composition](docs/video-composition.md) - Add intro/outro/watermark
 -   [Media Probing](docs/probe.md) - Get video/audio information
