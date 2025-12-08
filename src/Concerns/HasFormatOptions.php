@@ -98,7 +98,7 @@ trait HasFormatOptions
             ->audioCodec($options['audio_codec'] ?? 'aac');
 
         // Add GOP settings for reliable indexing (unless explicitly disabled)
-        if (!isset($options['skip_gop_settings']) || !$options['skip_gop_settings']) {
+        if (! isset($options['skip_gop_settings']) || ! $options['skip_gop_settings']) {
             $this->gopSize($options['gop_size'] ?? 60)
                 ->keyframeInterval($options['keyframe_interval'] ?? 60)
                 ->sceneChangeThreshold($options['scene_threshold'] ?? 0);
@@ -121,7 +121,7 @@ trait HasFormatOptions
             ->audioCodec($options['audio_codec'] ?? 'libopus');
 
         // Add GOP settings for reliable indexing (unless explicitly disabled)
-        if (!isset($options['skip_gop_settings']) || !$options['skip_gop_settings']) {
+        if (! isset($options['skip_gop_settings']) || ! $options['skip_gop_settings']) {
             $this->gopSize($options['gop_size'] ?? 60)
                 ->keyframeInterval($options['keyframe_interval'] ?? 60)
                 ->sceneChangeThreshold($options['scene_threshold'] ?? 0);
@@ -144,7 +144,7 @@ trait HasFormatOptions
             ->audioCodec($options['audio_codec'] ?? 'mp3');
 
         // Add GOP settings for reliable indexing (unless explicitly disabled)
-        if (!isset($options['skip_gop_settings']) || !$options['skip_gop_settings']) {
+        if (! isset($options['skip_gop_settings']) || ! $options['skip_gop_settings']) {
             $this->gopSize($options['gop_size'] ?? 60)
                 ->keyframeInterval($options['keyframe_interval'] ?? 60)
                 ->sceneChangeThreshold($options['scene_threshold'] ?? 0);
@@ -163,7 +163,7 @@ trait HasFormatOptions
             ->audioCodec($options['audio_codec'] ?? 'aac');
 
         // Add GOP settings for reliable indexing (unless explicitly disabled)
-        if (!isset($options['skip_gop_settings']) || !$options['skip_gop_settings']) {
+        if (! isset($options['skip_gop_settings']) || ! $options['skip_gop_settings']) {
             $this->gopSize($options['gop_size'] ?? 60)
                 ->keyframeInterval($options['keyframe_interval'] ?? 60)
                 ->sceneChangeThreshold($options['scene_threshold'] ?? 0);
@@ -186,7 +186,7 @@ trait HasFormatOptions
             ->audioCodec($options['audio_codec'] ?? 'mp3');
 
         // Add GOP settings for reliable indexing (unless explicitly disabled)
-        if (!isset($options['skip_gop_settings']) || !$options['skip_gop_settings']) {
+        if (! isset($options['skip_gop_settings']) || ! $options['skip_gop_settings']) {
             $this->gopSize($options['gop_size'] ?? 60)
                 ->keyframeInterval($options['keyframe_interval'] ?? 60)
                 ->sceneChangeThreshold($options['scene_threshold'] ?? 0);
@@ -205,7 +205,7 @@ trait HasFormatOptions
             ->audioCodec($options['audio_codec'] ?? 'aac');
 
         // Add GOP settings for reliable indexing (unless explicitly disabled)
-        if (!isset($options['skip_gop_settings']) || !$options['skip_gop_settings']) {
+        if (! isset($options['skip_gop_settings']) || ! $options['skip_gop_settings']) {
             $this->gopSize($options['gop_size'] ?? 60)
                 ->keyframeInterval($options['keyframe_interval'] ?? 60)
                 ->sceneChangeThreshold($options['scene_threshold'] ?? 0);

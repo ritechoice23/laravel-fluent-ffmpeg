@@ -161,7 +161,7 @@ trait HasCompatibilityOptions
 
     /**
      * Set GOP (Group of Pictures) size - controls keyframe interval
-     * 
+     *
      * @param  int  $gopSize  Number of frames between keyframes (e.g., 60 = 2s at 30fps)
      */
     public function gopSize(int $gopSize): self
@@ -171,7 +171,7 @@ trait HasCompatibilityOptions
 
     /**
      * Set keyframe interval (minimum distance between keyframes)
-     * 
+     *
      * @param  int  $interval  Minimum keyframe interval
      */
     public function keyframeInterval(int $interval): self
@@ -182,7 +182,7 @@ trait HasCompatibilityOptions
     /**
      * Control scene change detection threshold
      * Set to 0 to disable automatic keyframe insertion on scene changes
-     * 
+     *
      * @param  int  $threshold  Scene change threshold (0 = disabled)
      */
     public function sceneChangeThreshold(int $threshold): self
@@ -193,7 +193,7 @@ trait HasCompatibilityOptions
     /**
      * Set complete GOP and keyframe settings for reliable indexing
      * Recommended for video editing and streaming
-     * 
+     *
      * @param  int  $gopSize  GOP size (default: 60 frames)
      * @param  bool  $disableSceneDetection  Disable scene change detection (default: true)
      */

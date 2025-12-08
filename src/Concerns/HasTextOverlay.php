@@ -60,8 +60,9 @@ trait HasTextOverlay
      */
     protected function addTextOverlay(string $videoPath, string $outputPath): void
     {
-        if (!$this->textOverlay) {
+        if (! $this->textOverlay) {
             copy($videoPath, $outputPath);
+
             return;
         }
 
@@ -140,7 +141,7 @@ trait HasTextOverlay
             }
         }
 
-        return 'drawtext=' . implode(':', $parts);
+        return 'drawtext='.implode(':', $parts);
     }
 
     /**
@@ -194,6 +195,7 @@ trait HasTextOverlay
     {
         // Escape special characters for FFmpeg drawtext
         $text = str_replace(['\\', '\'', ':', '[', ']', ',', ';'], ['\\\\', '\\\'', '\\:', '\\[', '\\]', '\\,', '\\;'], $text);
+
         return $text;
     }
 }

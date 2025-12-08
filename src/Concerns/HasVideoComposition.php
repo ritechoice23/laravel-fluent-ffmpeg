@@ -7,7 +7,7 @@ use Ritechoice23\FluentFFmpeg\Facades\FFmpeg;
 /**
  * Video composition: intro, outro, and watermark support
  * Available globally for any video processing
- * 
+ *
  * Note: Text overlay functionality is in HasTextOverlay trait
  */
 trait HasVideoComposition
@@ -74,24 +74,24 @@ trait HasVideoComposition
         $intro = $intro ?? $this->introPath;
         $outro = $outro ?? $this->outroPath;
 
-        if (!$intro && !$outro) {
+        if (! $intro && ! $outro) {
             copy($videoPath, $outputPath);
 
             return;
         }
 
         $inputs = [];
-        $fileList = sys_get_temp_dir() . '/' . uniqid('concat_') . '_list.txt';
+        $fileList = sys_get_temp_dir().'/'.uniqid('concat_').'_list.txt';
 
         // Build concat list
         if ($intro) {
-            $inputs[] = "file '" . str_replace("'", "'\\''", realpath($intro)) . "'";
+            $inputs[] = "file '".str_replace("'", "'\\''", realpath($intro))."'";
         }
 
-        $inputs[] = "file '" . str_replace("'", "'\\''", realpath($videoPath)) . "'";
+        $inputs[] = "file '".str_replace("'", "'\\''", realpath($videoPath))."'";
 
         if ($outro) {
-            $inputs[] = "file '" . str_replace("'", "'\\''", realpath($outro)) . "'";
+            $inputs[] = "file '".str_replace("'", "'\\''", realpath($outro))."'";
         }
 
         file_put_contents($fileList, implode("\n", $inputs));
@@ -116,7 +116,7 @@ trait HasVideoComposition
         $watermark = $watermark ?? $this->watermarkPath;
         $position = $position ?? $this->watermarkPosition;
 
-        if (!$watermark) {
+        if (! $watermark) {
             copy($videoPath, $outputPath);
 
             return;
@@ -155,7 +155,7 @@ trait HasVideoComposition
         $hasText = $this->textOverlay !== null;
 
         // No composition needed
-        if (!$hasIntro && !$hasOutro && !$hasWatermark && !$hasText) {
+        if (! $hasIntro && ! $hasOutro && ! $hasWatermark && ! $hasText) {
             if ($inputPath !== $outputPath) {
                 copy($inputPath, $outputPath);
             }
@@ -167,7 +167,7 @@ trait HasVideoComposition
 
         // Step 1: Add intro/outro
         if ($hasIntro || $hasOutro) {
-            $tempWithIntroOutro = sys_get_temp_dir() . '/' . uniqid('composed_') . '_temp.mp4';
+            $tempWithIntroOutro = sys_get_temp_dir().'/'.uniqid('composed_').'_temp.mp4';
             $this->addIntroOutro($tempFile, $tempWithIntroOutro);
 
             if ($tempFile !== $inputPath) {
@@ -178,7 +178,7 @@ trait HasVideoComposition
 
         // Step 2: Add watermark
         if ($hasWatermark) {
-            $tempWithWatermark = sys_get_temp_dir() . '/' . uniqid('watermarked_') . '_temp.mp4';
+            $tempWithWatermark = sys_get_temp_dir().'/'.uniqid('watermarked_').'_temp.mp4';
             $this->addWatermark($tempFile, $tempWithWatermark);
             if ($tempFile !== $inputPath) {
                 unlink($tempFile);
@@ -230,7 +230,7 @@ trait HasVideoComposition
      */
     public function concat(array $inputs = []): self
     {
-        if (!empty($inputs)) {
+        if (! empty($inputs)) {
             foreach ($inputs as $input) {
                 $this->addInput($input);
             }

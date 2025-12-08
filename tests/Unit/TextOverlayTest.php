@@ -62,7 +62,7 @@ test('can add text overlay with custom coordinates', function () {
 test('can add text overlay with callback', function () {
     $builder = FFmpeg::fromPath('input.mp4')
         ->withText(function ($file) {
-            return 'Processing: ' . basename($file);
+            return 'Processing: '.basename($file);
         });
 
     expect($builder)->toBeInstanceOf(\Ritechoice23\FluentFFmpeg\Builder\FFmpegBuilder::class);
@@ -80,11 +80,11 @@ test('can combine text overlay with watermark', function () {
 });
 
 test('can use text overlay with directory processing', function () {
-    $testDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ffmpeg_test_' . uniqid();
+    $testDir = sys_get_temp_dir().DIRECTORY_SEPARATOR.'ffmpeg_test_'.uniqid();
     mkdir($testDir);
 
-    touch($testDir . DIRECTORY_SEPARATOR . 'video1.mp4');
-    touch($testDir . DIRECTORY_SEPARATOR . 'video2.mp4');
+    touch($testDir.DIRECTORY_SEPARATOR.'video1.mp4');
+    touch($testDir.DIRECTORY_SEPARATOR.'video2.mp4');
 
     $builder = FFmpeg::fromDirectory($testDir)
         ->withText(function ($file) {
@@ -96,7 +96,7 @@ test('can use text overlay with directory processing', function () {
     expect($builder->getInputs())->toHaveCount(2);
 
     // Cleanup
-    array_map('unlink', glob($testDir . DIRECTORY_SEPARATOR . '*'));
+    array_map('unlink', glob($testDir.DIRECTORY_SEPARATOR.'*'));
     rmdir($testDir);
 });
 

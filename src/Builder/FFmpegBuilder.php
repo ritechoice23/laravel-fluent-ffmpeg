@@ -237,7 +237,7 @@ class FFmpegBuilder
      */
     public function fromDirectory(string $directoryPath, bool $recursive = false): self
     {
-        if (!is_dir($directoryPath)) {
+        if (! is_dir($directoryPath)) {
             throw new \InvalidArgumentException("Directory not found: {$directoryPath}");
         }
 
@@ -278,7 +278,7 @@ class FFmpegBuilder
      *
      * @param  string  $directory  Directory path
      * @param  bool  $recursive  Whether to scan recursively
-     * @return array  Array of file paths
+     * @return array Array of file paths
      */
     protected function scanDirectory(string $directory, bool $recursive = false): array
     {
@@ -303,8 +303,6 @@ class FFmpegBuilder
 
     /**
      * Get the current file being processed (for use in callbacks)
-     *
-     * @return string|null
      */
     public function getCurrentFile(): ?string
     {
@@ -320,11 +318,12 @@ class FFmpegBuilder
         if ($this->directoryMode) {
             if (count($this->inputs) === 0) {
                 throw new \RuntimeException(
-                    'No media files found in directory. Ensure the directory contains files with supported extensions. ' .
-                    'Supported: ' . implode(', ', $this->allowedExtensions) . '. ' .
+                    'No media files found in directory. Ensure the directory contains files with supported extensions. '.
+                    'Supported: '.implode(', ', $this->allowedExtensions).'. '.
                     'Use allowExtensions() to customize.'
                 );
             }
+
             return $this->processDirectory($path);
         }
 
@@ -334,10 +333,10 @@ class FFmpegBuilder
             $pathInfo = pathinfo($path);
             $dir = $pathInfo['dirname'];
             $filename = $pathInfo['filename'];
-            $extension = isset($pathInfo['extension']) ? '.' . $pathInfo['extension'] : '';
+            $extension = isset($pathInfo['extension']) ? '.'.$pathInfo['extension'] : '';
 
             // Create pattern: filename_1.ext, filename_2.ext, etc.
-            $outputPattern = ($dir ? $dir . DIRECTORY_SEPARATOR : '') . $filename . '_{n}' . $extension;
+            $outputPattern = ($dir ? $dir.DIRECTORY_SEPARATOR : '').$filename.'_{n}'.$extension;
 
             return $this->batchClips($this->getPendingClips(), $outputPattern);
         }
@@ -347,7 +346,7 @@ class FFmpegBuilder
 
         // Apply intro/outro/watermark/text if specified
         if ($this->introPath || $this->outroPath || $this->watermarkPath || $this->textOverlay) {
-            $tempOutput = sys_get_temp_dir() . '/' . uniqid('ffmpeg_') . '_temp.mp4';
+            $tempOutput = sys_get_temp_dir().'/'.uniqid('ffmpeg_').'_temp.mp4';
             $this->outputPath = $tempOutput;
 
             // Execute FFmpeg command to create temp file
@@ -489,7 +488,7 @@ class FFmpegBuilder
      * Process directory of files
      *
      * @param  string  $outputPath  Output directory or pattern
-     * @return array  Array of results for each file
+     * @return array Array of results for each file
      */
     protected function processDirectory(string $outputPath): array
     {
@@ -502,7 +501,7 @@ class FFmpegBuilder
         } else {
             // Create output directory from path pattern
             $outputDir = dirname($outputPath);
-            if (!is_dir($outputDir)) {
+            if (! is_dir($outputDir)) {
                 mkdir($outputDir, 0755, true);
             }
         }
@@ -525,7 +524,7 @@ class FFmpegBuilder
             if ($isOutputDirectory) {
                 // Save to output directory with same filename
                 $filename = basename($inputFile);
-                $outputFile = $outputPath . DIRECTORY_SEPARATOR . $filename;
+                $outputFile = $outputPath.DIRECTORY_SEPARATOR.$filename;
             } else {
                 // Use pattern with {n}, {name}, {ext} placeholders
                 $pathInfo = pathinfo($inputFile);
