@@ -58,6 +58,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | S3 Streaming
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, fromDisk() will use pre-signed temporary URLs to stream
+    | directly from S3, avoiding the need to download files first.
+    | When disabled, files will be downloaded to a local temp file first.
+    |
+    */
+    's3_streaming' => env('FFMPEG_S3_STREAMING', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Options
     |--------------------------------------------------------------------------
     |

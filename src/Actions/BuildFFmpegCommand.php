@@ -3,6 +3,9 @@
 namespace Ritechoice23\FluentFFmpeg\Actions;
 
 use Ritechoice23\FluentFFmpeg\Builder\FFmpegBuilder;
+use Ritechoice23\FluentFFmpeg\Enums\ContainerFormat;
+use Ritechoice23\FluentFFmpeg\Enums\FFmpegPipe;
+use Ritechoice23\FluentFFmpeg\Enums\HttpMethod;
 
 class BuildFFmpegCommand
 {
@@ -25,6 +28,10 @@ class BuildFFmpegCommand
             $parts[] = escapeshellarg($input);
         }
 
+        // Add progress output
+        $parts[] = '-progress';
+        $parts[] = FFmpegPipe::PROGRESS->value;
+
         // Add filters
         if (count($builder->getFilters()) > 0) {
             $filterString = implode(',', $builder->getFilters());
@@ -44,25 +51,72 @@ class BuildFFmpegCommand
             $parts[] = escapeshellarg("{$key}={$value}");
         }
 
-        // Add output options
+        // Add output options for main output
         foreach ($builder->getOutputOptions() as $key => $value) {
             $parts[] = $this->formatOption($key, $value);
         }
 
         // Add output path
         if ($outputPath = $builder->getOutputPath()) {
-            // If saving to disk, use temp path first
-            if ($builder->getOutputDisk()) {
-                $tempPath = sys_get_temp_dir().'/'.uniqid('ffmpeg_').'_'.basename($outputPath);
-                $parts[] = '-y'; // Overwrite without asking
-                $parts[] = escapeshellarg($tempPath);
+            // If saving to disk, check for direct upload support
+            if ($outputDisk = $builder->getOutputDisk()) {
+                $disk = \Illuminate\Support\Facades\Storage::disk($outputDisk);
+
+                // Check if disk supports temporaryUploadUrl (Laravel 9+)
+                if (method_exists($disk, 'temporaryUploadUrl')) {
+                    try {
+                        // Try to use temporaryUploadUrl for direct FFmpeg->S3 upload
+                        $uploadUrl = $disk->temporaryUploadUrl($outputPath, now()->addHour());
+
+                        // Use HTTP PUT method for direct upload
+                        $parts[] = '-method';
+                        $parts[] = HttpMethod::PUT->value;
+                        $parts[] = escapeshellarg($uploadUrl);
+                    } catch (\Exception $e) {
+                        // Failed to generate upload URL - throw descriptive error
+                        throw new \RuntimeException(
+                            "Failed to generate temporary upload URL for disk '{$outputDisk}': ".$e->getMessage(),
+                            0,
+                            $e
+                        );
+                    }
+                } else {
+                    // Disk doesn't support temporaryUploadUrl - throw descriptive error
+                    throw new \RuntimeException(
+                        "Storage disk '{$outputDisk}' does not support temporaryUploadUrl(). ".
+                        'Direct upload requires S3-compatible storage (s3, minio, digitalocean) or filesystems with signed upload support. '.
+                        'Current disk driver: '.config("filesystems.disks.{$outputDisk}.driver")
+                    );
+                }
             } else {
                 $parts[] = '-y'; // Overwrite without asking
                 $parts[] = escapeshellarg($outputPath);
             }
         }
 
+        // Add PCM output for peaks if requested
+        if ($peaksConfig = $builder->getPeaksConfig()) {
+            $parts[] = '-map';
+            $parts[] = '0:a';
+            $parts[] = '-f';
+            $parts[] = 's16le';
+            $parts[] = '-acodec';
+            $parts[] = 'pcm_s16le';
+            $parts[] = FFmpegPipe::PEAKS_PCM->value;
+        }
+
         return implode(' ', $parts);
+    }
+
+    /**
+     * Get output format for streaming
+     */
+    protected function getOutputFormat(string $outputPath, FFmpegBuilder $builder): string
+    {
+        $extension = pathinfo($outputPath, PATHINFO_EXTENSION);
+        $format = ContainerFormat::fromExtension($extension);
+
+        return $format?->getFFmpegFormat() ?? ContainerFormat::MP4->getFFmpegFormat();
     }
 
     /**

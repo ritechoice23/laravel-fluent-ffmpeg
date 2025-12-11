@@ -2,6 +2,7 @@
 
 namespace Ritechoice23\FluentFFmpeg\Concerns;
 
+use Ritechoice23\FluentFFmpeg\Enums\Position;
 use Ritechoice23\FluentFFmpeg\Facades\FFmpeg;
 
 /**
@@ -156,17 +157,10 @@ trait HasTextOverlay
             ];
         }
 
-        $positions = [
-            'top-left' => ['x' => $padding, 'y' => $padding],
-            'top-center' => ['x' => '(w-text_w)/2', 'y' => $padding],
-            'top-right' => ['x' => "w-text_w-{$padding}", 'y' => $padding],
-            'center' => ['x' => '(w-text_w)/2', 'y' => '(h-text_h)/2'],
-            'bottom-left' => ['x' => $padding, 'y' => "h-text_h-{$padding}"],
-            'bottom-center' => ['x' => '(w-text_w)/2', 'y' => "h-text_h-{$padding}"],
-            'bottom-right' => ['x' => "w-text_w-{$padding}", 'y' => "h-text_h-{$padding}"],
-        ];
+        // Try to use enum for position lookup
+        $positionEnum = Position::tryFrom($position);
 
-        return $positions[$position] ?? $positions['bottom-center'];
+        return $positionEnum?->getCoordinates($padding) ?? Position::BOTTOM_CENTER->getCoordinates($padding);
     }
 
     /**
