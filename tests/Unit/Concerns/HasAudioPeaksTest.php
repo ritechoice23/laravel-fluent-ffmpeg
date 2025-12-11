@@ -2,26 +2,49 @@
 
 use Ritechoice23\FluentFFmpeg\Builder\FFmpegBuilder;
 
-it('throws exception when no input file is specified', function () {
+it('can generate peaks only mode with only parameter', function () {
     $builder = new FFmpegBuilder;
+    $builder->fromPath('input.mp3')
+        ->withPeaks(only: true);
 
-    expect(fn () => $builder->generatePeaks())->toThrow(RuntimeException::class, 'No input file specified');
+    $config = $builder->getPeaksConfig();
+
+    expect($config['only'])->toBeTrue();
 });
 
-it('has generatePeaks method', function () {
+it('can set custom peaks format', function () {
     $builder = new FFmpegBuilder;
+    $builder->withPeaks(format: 'full');
 
-    expect(method_exists($builder, 'generatePeaks'))->toBeTrue();
+    $config = $builder->getPeaksConfig();
+
+    expect($config['format'])->toBe('full');
 });
 
-it('has generatePeaksToFile method', function () {
+it('defaults to simple format', function () {
     $builder = new FFmpegBuilder;
+    $builder->withPeaks();
 
-    expect(method_exists($builder, 'generatePeaksToFile'))->toBeTrue();
+    $config = $builder->getPeaksConfig();
+
+    expect($config['format'])->toBe('simple');
 });
 
-it('has generatePeaksToDisk method', function () {
+it('can set custom peaks filename as string', function () {
     $builder = new FFmpegBuilder;
+    $builder->withPeaks(peaksFilename: 'custom-peaks.json');
 
-    expect(method_exists($builder, 'generatePeaksToDisk'))->toBeTrue();
+    $config = $builder->getPeaksConfig();
+
+    expect($config['peaks_filename'])->toBe('custom-peaks.json');
+});
+
+it('can set custom peaks filename as callback', function () {
+    $builder = new FFmpegBuilder;
+    $callback = fn ($output) => str_replace('.m4a', '.waveform.json', $output);
+    $builder->withPeaks(peaksFilename: $callback);
+
+    $config = $builder->getPeaksConfig();
+
+    expect($config['peaks_filename'])->toBe($callback);
 });

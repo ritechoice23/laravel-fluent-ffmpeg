@@ -70,30 +70,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Peaks Output Format
-    |--------------------------------------------------------------------------
-    |
-    | Control the format of peaks data returned by withPeaks().
-    |
-    | 'simple' - Returns only the peaks data array (best for wavesurfer.js)
-    |            Example: [0.1, 0.3, 0.2, 0.4, ...]
-    |
-    | 'full' - Returns complete audiowaveform format with metadata
-    |          Example: {
-    |              "version": 2,
-    |              "channels": 2,
-    |              "sample_rate": 44100,
-    |              "samples_per_pixel": 512,
-    |              "bits": 32,
-    |              "length": 1000,
-    |              "data": [0.1, 0.3, ...]
-    |          }
-    |
-    */
-    'peaks_format' => env('FFMPEG_PEAKS_FORMAT', 'simple'),
-
-    /*
-    |--------------------------------------------------------------------------
     | Default Options
     |--------------------------------------------------------------------------
     |

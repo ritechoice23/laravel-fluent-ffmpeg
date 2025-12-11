@@ -88,11 +88,19 @@ FFmpeg::fromPath('video.mp4')
         'background_color' => 'black@0.5',
     ])
     ->save('output.mp4');
+
+// Generate audio waveforms for visualization
+FFmpeg::fromPath('audio.mp3')
+    ->audioCodec('aac')
+    ->withPeaks(samplesPerPixel: 512, normalizeRange: [0, 1])
+    ->save('output.m4a');
+// Outputs: output.m4a + output-peaks.json
 ```
 
 ## Features
 
 -   **Fluent API** - Chainable, expressive syntax
+-   **Audio Waveforms** - Generate waveform data for visualization
 -   **Multi-Clip Extraction** - Extract multiple clips with auto-numbering
 -   **Directory Processing** - Process multiple files from a directory
 -   **Text Overlay** - Add styled text with positioning and timing
@@ -105,12 +113,13 @@ FFmpeg::fromPath('video.mp4')
 -   **Queue Support** - Process videos in background
 -   **Smart Defaults** - Sensible defaults from config
 -   **Events** - Track processing lifecycle
--   **Fully Tested** - 104+ passing tests
+-   **Fully Tested** - 214+ passing tests
 
 ## Documentation
 
 -   [Installation & Configuration](docs/installation.md)
 -   [Basic Usage](docs/basic-usage.md)
+-   [Audio Waveforms](docs/audio-waveforms.md) - Generate waveform data for visualization
 -   [Directory Processing](docs/directory-processing.md) - Process multiple files from a directory
 -   [Text Overlay](docs/text-overlay.md) - Add styled text to videos
 -   [Clipping](docs/clipping.md) - Extract single or multiple video clips

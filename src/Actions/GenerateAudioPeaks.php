@@ -14,7 +14,7 @@ class GenerateAudioPeaks
      * @param  string  $filePath  Path to the audio/video file
      * @param  int  $samplesPerPixel  Number of audio samples per waveform min/max pair
      * @param  array|null  $normalizeRange  Normalization range [min, max] or null for no normalization
-     *                                       Examples: [0, 1] for wavesurfer.js, [-1, 1] for signed normalized, null for raw values (-32768 to 32767)
+     *                                      Examples: [0, 1] for wavesurfer.js, [-1, 1] for signed normalized, null for raw values (-32768 to 32767)
      * @return array The peaks data
      *
      * @throws ExecutionException
@@ -133,17 +133,7 @@ class GenerateAudioPeaks
             $process->setTimeout(config('fluent-ffmpeg.timeout', 3600));
 
             // Stream output callback
-            $process->run(function ($type, $data) use (
-                &$buffer,
-                &$peaks,
-                &$currentSample,
-                &$channelMinMax,
-                $channels,
-                $sampleSize,
-                $bytesPerFrame,
-                $samplesPerPixel,
-                $normalizeRange
-            ) {
+            $process->run(function ($type, $data) use (&$buffer, &$peaks, &$currentSample, &$channelMinMax, $channels, $sampleSize, $bytesPerFrame, $samplesPerPixel, $normalizeRange) {
                 if ($type === Process::OUT) {
                     // Append new data to buffer
                     $buffer .= $data;

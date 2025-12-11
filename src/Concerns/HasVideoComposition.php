@@ -2,6 +2,7 @@
 
 namespace Ritechoice23\FluentFFmpeg\Concerns;
 
+use Ritechoice23\FluentFFmpeg\Enums\Position;
 use Ritechoice23\FluentFFmpeg\Facades\FFmpeg;
 
 /**
@@ -30,7 +31,7 @@ trait HasVideoComposition
     /**
      * Watermark position
      */
-    protected string $watermarkPosition = 'top-right';
+    protected string $watermarkPosition = Position::TOP_RIGHT->value;
 
     /**
      * Add intro video
@@ -56,12 +57,12 @@ trait HasVideoComposition
      * Add watermark
      *
      * @param  string  $watermarkPath  Path to watermark image
-     * @param  string  $position  Position: top-left, top-right, bottom-left, bottom-right, center
+     * @param  Position|string  $position  Position enum or legacy string value
      */
-    public function withWatermark(string $watermarkPath, string $position = 'top-right'): self
+    public function withWatermark(string $watermarkPath, Position|string $position = Position::TOP_RIGHT): self
     {
         $this->watermarkPath = $watermarkPath;
-        $this->watermarkPosition = $position;
+        $this->watermarkPosition = $position instanceof Position ? $position->value : $position;
 
         return $this;
     }
@@ -122,16 +123,9 @@ trait HasVideoComposition
             return;
         }
 
-        // Map position names to x/y coordinates for overlay
-        $positions = [
-            'top-left' => ['x' => 10, 'y' => 10],
-            'top-right' => ['x' => 'W-w-10', 'y' => 10],
-            'bottom-left' => ['x' => 10, 'y' => 'H-h-10'],
-            'bottom-right' => ['x' => 'W-w-10', 'y' => 'H-h-10'],
-            'center' => ['x' => '(W-w)/2', 'y' => '(H-h)/2'],
-        ];
-
-        $coords = $positions[$position] ?? $positions['top-right'];
+        // Try to use enum for position lookup
+        $positionEnum = Position::tryFrom($position);
+        $coords = $positionEnum?->getWatermarkCoordinates() ?? ['x' => 'W-w-10', 'y' => 10];
 
         FFmpeg::fromPath($videoPath)
             ->addInput($watermark)

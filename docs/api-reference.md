@@ -4,25 +4,29 @@ This document provides a comprehensive reference for all available methods in th
 
 ## Core Methods (`FFmpegBuilder`)
 
-| Method                                       | Description                                                |
-| -------------------------------------------- | ---------------------------------------------------------- |
-| `fromPath(string\|array $path)`              | Set input file(s) from path.                               |
-| `fromPaths(array $paths)`                    | Set multiple input files from paths.                       |
-| `addInput(string $path)`                     | Add an additional input file.                              |
-| `fromDisk(string $disk, string $path)`       | Set input file from a Laravel disk.                        |
-| `fromUrl(string $url)`                       | Set input file from a URL.                                 |
-| `fromUploadedFile(UploadedFile $file)`       | Set input file from an uploaded file.                      |
-| `save(string $path)`                         | Execute the command and save output to a local path.       |
-| `toDisk(string $disk, string $path)`         | Execute and save output to a Laravel disk.                 |
-| `getCommand()`                               | Get the generated FFmpeg command string without executing. |
-| `dryRun()`                                   | Alias for `getCommand()`.                                  |
-| `ddCommand()`                                | Dump the generated FFmpeg command and exit (`dd()`).       |
-| `onProgress(callable $callback)`             | Set a callback for progress updates.                       |
-| `onError(callable $callback)`                | Set a callback for error handling.                         |
-| `broadcastProgress(string $channel)`         | Broadcast progress updates to a channel.                   |
-| `addInputOption(string $key, mixed $value)`  | Add a raw input option (e.g., `-ss`).                      |
-| `addOutputOption(string $key, mixed $value)` | Add a raw output option (e.g., `-c:v`).                    |
-| `addOption(string $key, mixed $value)`       | Alias for `addOutputOption`.                               |
+| Method                                         | Description                                                            |
+| ---------------------------------------------- | ---------------------------------------------------------------------- |
+| `fromPath(string\|array $path)`                | Set input file(s) from path.                                           |
+| `fromPaths(array $paths)`                      | Set multiple input files from paths.                                   |
+| `addInput(string $path)`                       | Add an additional input file.                                          |
+| `fromDisk(string $disk, string $path)`         | Set input file from a Laravel disk (supports S3 streaming).            |
+| `fromUrl(string $url)`                         | Set input file from a URL.                                             |
+| `fromUploadedFile(UploadedFile $file)`         | Set input file from an uploaded file.                                  |
+| `fromDirectory(string $path, bool $recursive)` | Process all files in a directory. Use `allowExtensions()` to filter.   |
+| `allowExtensions(array $extensions)`           | Filter directory files by extensions (e.g., `['mp4', 'mov']`).         |
+| `eachFile(callable $callback)`                 | Set callback for customizing processing of each file in directory.     |
+| `getCurrentFile()`                             | Get the current file being processed in directory mode.                |
+| `save(string $path)`                           | Execute the command and save output to a local path.                   |
+| `toDisk(string $disk, string $path)`           | Execute and save output to a Laravel disk (supports direct S3 upload). |
+| `getCommand()`                                 | Get the generated FFmpeg command string without executing.             |
+| `dryRun()`                                     | Alias for `getCommand()`.                                              |
+| `ddCommand()`                                  | Dump the generated FFmpeg command and exit (`dd()`).                   |
+| `onProgress(callable $callback)`               | Set a callback for progress updates.                                   |
+| `onError(callable $callback)`                  | Set a callback for error handling.                                     |
+| `broadcastProgress(string $channel)`           | Broadcast progress updates to a channel.                               |
+| `addInputOption(string $key, mixed $value)`    | Add a raw input option (e.g., `-ss`).                                  |
+| `addOutputOption(string $key, mixed $value)`   | Add a raw output option (e.g., `-c:v`).                                |
+| `addOption(string $key, mixed $value)`         | Alias for `addOutputOption`.                                           |
 
 ## Video Options (`HasVideoOptions`)
 
@@ -47,6 +51,65 @@ This document provides a comprehensive reference for all available methods in th
 | `audioSampleRate(?int $rate)`    | Set the audio sample rate (e.g., `44100`).    |
 | `audioQuality(?int $quality)`    | Set the audio quality level.                  |
 | `removeAudio()`                  | Remove the audio stream from the output.      |
+
+## Audio Waveforms (`HasAudioPeaks`)
+
+| Method                                                                                                                                                                                              | Description                                                                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `withPeaks(int $samplesPerPixel = 512, ?array $normalizeRange = null, bool $only = false, string $format = 'simple', string\|callable\|null $peaksFilename = null, bool $useProcessedFile = false)` | Enable audio waveform generation. Set `$samplesPerPixel` for resolution, `$normalizeRange` for normalization (e.g., `[0, 1]` for wavesurfer.js), `$only` to skip transcoding, `$format` for output format ('simple' or 'full'), `$peaksFilename` for custom filename, and `$useProcessedFile` to generate peaks from processed output instead of original input (useful after trimming/filters). |
+| `getPeaksConfig()`                                                                                                                                                                                  | Get the current peaks configuration array.                                                                                                                                                                                                                                                                                                                                                       |
+
+### Waveform Generation Examples
+
+```php
+// Generate peaks with transcoding (default behavior)
+FFmpeg::fromPath('audio.mp3')
+    ->audioCodec('aac')
+    ->withPeaks(samplesPerPixel: 512, normalizeRange: [0, 1])
+    ->save('output.m4a');
+// Saves: output.m4a + output-peaks.json
+
+// Peaks-only mode (no transcoding, lightweight)
+FFmpeg::fromPath('audio.mp3')
+    ->withPeaks(samplesPerPixel: 512, normalizeRange: [0, 1], only: true)
+    ->save('waveform.json');
+
+// Custom peaks filename
+FFmpeg::fromPath('audio.mp3')
+    ->audioCodec('aac')
+    ->withPeaks(peaksFilename: 'custom-waveform.json')
+    ->save('output.m4a');
+
+// Full format with metadata
+FFmpeg::fromPath('audio.mp3')
+    ->withPeaks(format: 'full', normalizeRange: [0, 1])
+    ->save('output.m4a');
+// output-peaks.json contains: {version, channels, sample_rate, data, ...}
+
+// Dynamic filename via callback
+FFmpeg::fromPath('audio.mp3')
+    ->withPeaks(peaksFilename: fn($output) => str_replace('.m4a', '.wave.json', $output))
+    ->save('processed/audio.m4a');
+// Saves: processed/audio.wave.json
+
+// Direct S3 upload with peaks
+FFmpeg::fromDisk('s3', 'uploads/audio.mp3')
+    ->audioCodec('aac')
+    ->withPeaks(samplesPerPixel: 512, normalizeRange: [0, 1])
+    ->toDisk('s3', 'processed/audio.m4a');
+// Uses temporaryUploadUrl() for direct FFmpeg → S3 upload
+// Peaks saved to: processed/audio-peaks.json
+```
+
+**Parameters:**
+
+-   `$samplesPerPixel`: Higher values = less detail, smaller file (256 = high detail, 2048 = low detail)
+-   `$normalizeRange`: `null` (raw PCM), `[0, 1]` (wavesurfer.js), `[-1, 1]` (signed), or custom range
+-   `$only`: Skip transcoding, only generate peaks (lightweight mode)
+-   `$format`: `'simple'` (array only) or `'full'` (with metadata)
+-   `$peaksFilename`: Custom filename (string) or callback receiving output path
+
+**See also:** [Audio Waveforms Guide](audio-waveforms.md)
 
 ## Subtitle Options (`HasSubtitleOptions`)
 

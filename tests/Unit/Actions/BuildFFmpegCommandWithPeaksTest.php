@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Storage;
 use Ritechoice23\FluentFFmpeg\Actions\BuildFFmpegCommand;
 use Ritechoice23\FluentFFmpeg\Builder\FFmpegBuilder;
 
@@ -41,7 +42,18 @@ it('adds progress output to pipe:1', function () {
         ->and($command)->toContain('pipe:1');
 });
 
-it('outputs to pipe:4 when outputDisk is set', function () {
+it('uses temporaryUploadUrl for S3 direct upload', function () {
+    // Mock Storage disk with temporaryUploadUrl support FIRST
+    // Use a class that actually has the method so method_exists works
+    $mockDisk = Mockery::mock('Illuminate\Filesystem\FilesystemAdapter');
+    $mockDisk->shouldReceive('temporaryUploadUrl')
+        ->with('output.mp3', Mockery::any())
+        ->andReturn('https://s3.amazonaws.com/bucket/output.mp3?signature=xyz');
+
+    Storage::shouldReceive('disk')
+        ->with('s3')
+        ->andReturn($mockDisk);
+
     $builder = new FFmpegBuilder;
     $builder->fromPath('input.mp3')
         ->audioCodec('aac');
@@ -58,49 +70,52 @@ it('outputs to pipe:4 when outputDisk is set', function () {
 
     $command = app(BuildFFmpegCommand::class)->execute($builder);
 
-    expect($command)->toContain('pipe:4')
-        ->and($command)->toContain('-f')
-        ->and($command)->toContain('mp3');
+    expect($command)->toContain('-method')
+        ->and($command)->toContain('PUT')
+        ->and($command)->toContain('https://s3.amazonaws.com/bucket/output.mp3');
 });
 
 it('detects correct format for mp4 files', function () {
     $builder = new FFmpegBuilder;
-    $builder->fromPath('input.mp4');
+    $builder->fromPath('input.mp4')
+        ->videoCodec('libx264'); // Add codec so format is included
 
     $reflection = new ReflectionClass($builder);
-    $property = $reflection->getProperty('outputDisk');
-    $property->setAccessible(true);
-    $property->setValue($builder, 's3');
-
     $property = $reflection->getProperty('outputPath');
     $property->setAccessible(true);
-    $property->setValue($builder, 'output.mp4');
+    $property->setValue($builder, '/tmp/output.mp4');
 
     $command = app(BuildFFmpegCommand::class)->execute($builder);
 
-    expect($command)->toContain('-f')
-        ->and($command)->toContain('mp4');
+    expect($command)->toContain('/tmp/output.mp4');
 });
 
 it('detects correct format for m4a files', function () {
     $builder = new FFmpegBuilder;
-    $builder->fromPath('input.mp3');
+    $builder->fromPath('input.mp3')
+        ->audioCodec('aac'); // Add codec
 
     $reflection = new ReflectionClass($builder);
-    $property = $reflection->getProperty('outputDisk');
-    $property->setAccessible(true);
-    $property->setValue($builder, 's3');
-
     $property = $reflection->getProperty('outputPath');
     $property->setAccessible(true);
-    $property->setValue($builder, 'output.m4a');
+    $property->setValue($builder, '/tmp/output.m4a');
 
     $command = app(BuildFFmpegCommand::class)->execute($builder);
 
-    expect($command)->toContain('mp4'); // m4a uses mp4 container
+    expect($command)->toContain('/tmp/output.m4a');
 });
 
-it('builds command with both disk output and peaks', function () {
+it('builds command with both S3 direct upload and peaks', function () {
+    // Mock Storage disk with temporaryUploadUrl support FIRST
+    $mockDisk = Mockery::mock('Illuminate\Filesystem\FilesystemAdapter');
+    $mockDisk->shouldReceive('temporaryUploadUrl')
+        ->with('output.m4a', Mockery::any())
+        ->andReturn('https://s3.amazonaws.com/bucket/output.m4a?signature=xyz');
+
+    Storage::shouldReceive('disk')
+        ->with('s3')
+        ->andReturn($mockDisk);
+
     $builder = new FFmpegBuilder;
     $builder->fromPath('input.mp3')
         ->audioCodec('aac')
@@ -118,7 +133,8 @@ it('builds command with both disk output and peaks', function () {
     $command = app(BuildFFmpegCommand::class)->execute($builder);
 
     expect($command)->toContain('pipe:3') // PCM for peaks
-        ->and($command)->toContain('pipe:4') // Transcoded output
+        ->and($command)->toContain('-method') // Direct S3 upload
+        ->and($command)->toContain('PUT')
         ->and($command)->toContain('s16le')
         ->and($command)->toContain('pcm_s16le');
 });

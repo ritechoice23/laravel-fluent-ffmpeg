@@ -1,12 +1,11 @@
 <?php
 
-use Ritechoice23\FluentFFmpeg\Builder\FFmpegBuilder;
 use Illuminate\Support\Facades\Storage;
+use Ritechoice23\FluentFFmpeg\Builder\FFmpegBuilder;
 
 beforeEach(function () {
     config(['fluent-ffmpeg.s3_streaming' => true]);
 });
-
 
 it('uses temporaryUrl when s3_streaming is enabled', function () {
     config(['fluent-ffmpeg.s3_streaming' => true]);
@@ -30,30 +29,37 @@ it('uses temporaryUrl when s3_streaming is enabled', function () {
     expect($inputs[0])->toContain('https://s3.amazonaws.com');
 });
 
-it('falls back to path when temporaryUrl throws exception', function () {
+it('falls back to pipe streaming when temporaryUrl throws exception', function () {
     config(['fluent-ffmpeg.s3_streaming' => true]);
 
     Storage::fake('local');
     Storage::disk('local')->put('test.mp3', 'fake content');
 
-    // Mock Storage to throw exception on temporaryUrl
+    // Mock Storage to throw exception on temporaryUrl but provide readStream
+    $mockDisk = Mockery::mock();
+    $mockDisk->shouldReceive('temporaryUrl')
+        ->andThrow(new \RuntimeException('temporaryUrl not supported'));
+    $mockDisk->shouldReceive('readStream')
+        ->with('test.mp3')
+        ->andReturn(fopen('php://memory', 'r'));
+
     Storage::shouldReceive('disk')
         ->with('local')
-        ->andReturnSelf()
-        ->shouldReceive('temporaryUrl')
-        ->andThrow(new \RuntimeException('temporaryUrl not supported'))
-        ->shouldReceive('path')
-        ->with('test.mp3')
-        ->andReturn('/fake/path/test.mp3');
+        ->andReturn($mockDisk);
 
     $builder = new FFmpegBuilder;
     $builder->fromDisk('local', 'test.mp3');
 
     $inputs = $builder->getInputs();
 
-    // Should use local path instead of URL
-    expect($inputs[0])->not->toContain('http')
-        ->and($inputs[0])->toBe('/fake/path/test.mp3');
+    // Should fallback to pipe:0
+    expect($inputs[0])->toBe('pipe:0');
+
+    // Verify pendingInputStream is set using reflection
+    $reflection = new ReflectionClass($builder);
+    $property = $reflection->getProperty('pendingInputStream');
+    $property->setAccessible(true);
+    expect($property->getValue($builder))->not->toBeNull();
 });
 
 it('uses path when s3_streaming is disabled', function () {

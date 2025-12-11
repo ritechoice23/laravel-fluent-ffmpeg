@@ -5,12 +5,19 @@ namespace Ritechoice23\FluentFFmpeg\Actions;
 class PeaksStreamProcessor
 {
     protected array $peaksData = [];
+
     protected string $pcmBuffer = '';
+
     protected int $currentSample = 0;
+
     protected array $channelMinMax = [];
+
     protected int $samplesPerPixel;
+
     protected ?array $normalizeRange;
+
     protected int $channels = 2;
+
     protected int $sampleRate = 44100;
 
     public function __construct(array $config)

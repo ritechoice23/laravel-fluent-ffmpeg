@@ -3,6 +3,9 @@
 namespace Ritechoice23\FluentFFmpeg\Actions;
 
 use Ritechoice23\FluentFFmpeg\Builder\FFmpegBuilder;
+use Ritechoice23\FluentFFmpeg\Enums\ContainerFormat;
+use Ritechoice23\FluentFFmpeg\Enums\FFmpegPipe;
+use Ritechoice23\FluentFFmpeg\Enums\HttpMethod;
 
 class BuildFFmpegCommand
 {
@@ -27,7 +30,7 @@ class BuildFFmpegCommand
 
         // Add progress output
         $parts[] = '-progress';
-        $parts[] = 'pipe:1';
+        $parts[] = FFmpegPipe::PROGRESS->value;
 
         // Add filters
         if (count($builder->getFilters()) > 0) {
@@ -55,11 +58,36 @@ class BuildFFmpegCommand
 
         // Add output path
         if ($outputPath = $builder->getOutputPath()) {
-            // If saving to disk, output to pipe:4 for streaming to S3
-            if ($builder->getOutputDisk()) {
-                $parts[] = '-f';
-                $parts[] = $this->getOutputFormat($outputPath, $builder);
-                $parts[] = 'pipe:4';
+            // If saving to disk, check for direct upload support
+            if ($outputDisk = $builder->getOutputDisk()) {
+                $disk = \Illuminate\Support\Facades\Storage::disk($outputDisk);
+
+                // Check if disk supports temporaryUploadUrl (Laravel 9+)
+                if (method_exists($disk, 'temporaryUploadUrl')) {
+                    try {
+                        // Try to use temporaryUploadUrl for direct FFmpeg->S3 upload
+                        $uploadUrl = $disk->temporaryUploadUrl($outputPath, now()->addHour());
+
+                        // Use HTTP PUT method for direct upload
+                        $parts[] = '-method';
+                        $parts[] = HttpMethod::PUT->value;
+                        $parts[] = escapeshellarg($uploadUrl);
+                    } catch (\Exception $e) {
+                        // Failed to generate upload URL - throw descriptive error
+                        throw new \RuntimeException(
+                            "Failed to generate temporary upload URL for disk '{$outputDisk}': ".$e->getMessage(),
+                            0,
+                            $e
+                        );
+                    }
+                } else {
+                    // Disk doesn't support temporaryUploadUrl - throw descriptive error
+                    throw new \RuntimeException(
+                        "Storage disk '{$outputDisk}' does not support temporaryUploadUrl(). ".
+                        'Direct upload requires S3-compatible storage (s3, minio, digitalocean) or filesystems with signed upload support. '.
+                        'Current disk driver: '.config("filesystems.disks.{$outputDisk}.driver")
+                    );
+                }
             } else {
                 $parts[] = '-y'; // Overwrite without asking
                 $parts[] = escapeshellarg($outputPath);
@@ -74,7 +102,7 @@ class BuildFFmpegCommand
             $parts[] = 's16le';
             $parts[] = '-acodec';
             $parts[] = 'pcm_s16le';
-            $parts[] = 'pipe:3';
+            $parts[] = FFmpegPipe::PEAKS_PCM->value;
         }
 
         return implode(' ', $parts);
@@ -86,19 +114,9 @@ class BuildFFmpegCommand
     protected function getOutputFormat(string $outputPath, FFmpegBuilder $builder): string
     {
         $extension = pathinfo($outputPath, PATHINFO_EXTENSION);
+        $format = ContainerFormat::fromExtension($extension);
 
-        // Map extensions to container formats
-        return match (strtolower($extension)) {
-            'mp4', 'm4a', 'm4v' => 'mp4',
-            'mp3' => 'mp3',
-            'webm' => 'webm',
-            'ogg' => 'ogg',
-            'wav' => 'wav',
-            'flac' => 'flac',
-            'mkv' => 'matroska',
-            'avi' => 'avi',
-            default => 'mp4',
-        };
+        return $format?->getFFmpegFormat() ?? ContainerFormat::MP4->getFFmpegFormat();
     }
 
     /**

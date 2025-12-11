@@ -74,7 +74,6 @@ it('can be chained with other methods', function () {
         ->and($builder->getPeaksConfig())->toBeArray();
 });
 
-
 it('returns null when peaks not configured', function () {
     $builder = new FFmpegBuilder;
 
@@ -89,5 +88,30 @@ it('returns config after withPeaks is called', function () {
 
     expect($config)->toBeArray()
         ->and($config['samples_per_pixel'])->toBe(256)
-        ->and($config['normalize_range'])->toBe([0, 1]);
+        ->and($config['normalize_range'])->toBe([0, 1])
+        ->and($config['only'])->toBeFalse()
+        ->and($config['format'])->toBe('simple')
+        ->and($config['peaks_filename'])->toBeNull();
+});
+
+it('includes all new parameters in config', function () {
+    $builder = new FFmpegBuilder;
+    $callback = fn ($output) => 'custom.json';
+
+    $builder->withPeaks(
+        samplesPerPixel: 1024,
+        normalizeRange: [-1, 1],
+        only: true,
+        format: 'full',
+        peaksFilename: $callback
+    );
+
+    $config = $builder->getPeaksConfig();
+
+    expect($config)->toBeArray()
+        ->and($config['samples_per_pixel'])->toBe(1024)
+        ->and($config['normalize_range'])->toBe([-1, 1])
+        ->and($config['only'])->toBeTrue()
+        ->and($config['format'])->toBe('full')
+        ->and($config['peaks_filename'])->toBe($callback);
 });

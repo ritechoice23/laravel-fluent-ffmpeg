@@ -3,6 +3,7 @@
 namespace Ritechoice23\FluentFFmpeg\Builder;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Ritechoice23\FluentFFmpeg\Actions\BuildFFmpegCommand;
 use Ritechoice23\FluentFFmpeg\Actions\ExecuteFFmpegCommand;
@@ -22,6 +23,7 @@ use Ritechoice23\FluentFFmpeg\Concerns\HasTextOverlay;
 use Ritechoice23\FluentFFmpeg\Concerns\HasTimeOptions;
 use Ritechoice23\FluentFFmpeg\Concerns\HasVideoComposition;
 use Ritechoice23\FluentFFmpeg\Concerns\HasVideoOptions;
+use Ritechoice23\FluentFFmpeg\Enums\PeaksFormat;
 
 class FFmpegBuilder
 {
@@ -46,6 +48,11 @@ class FFmpegBuilder
      * Input file paths
      */
     protected array $inputs = [];
+
+    /**
+     * Pending input stream for pipe:0 input
+     */
+    protected $pendingInputStream = null;
 
     /**
      * Input options
@@ -213,8 +220,20 @@ class FFmpegBuilder
                 $this->inputs[] = $url;
 
                 return $this;
-            } catch (\Exception) {
-                // Fall through to local path method
+            } catch (\Exception $e) {
+                // Fallback: Use stream piping for non-S3 disks
+                if ($logChannel = config('fluent-ffmpeg.log_channel')) {
+                    Log::channel($logChannel)->info(
+                        "Disk '{$disk}' does not support temporaryUrl(), falling back to stream piping",
+                        ['path' => $path, 'error' => $e->getMessage()]
+                    );
+                }
+
+                // Store the stream for pipe:0 input
+                $this->pendingInputStream = Storage::disk($disk)->readStream($path);
+                $this->inputs[] = 'pipe:0';
+
+                return $this;
             }
         }
 
@@ -332,6 +351,11 @@ class FFmpegBuilder
      */
     public function save(string $path): bool|array
     {
+        // Check if this is peaks-only mode (lightweight - no transcoding)
+        if (($this->peaksConfig['only'] ?? false) === true || str_ends_with($path, '.json')) {
+            return $this->executePeaksOnly($path);
+        }
+
         // Check if this is a directory processing operation
         if ($this->directoryMode) {
             if (count($this->inputs) === 0) {
@@ -577,6 +601,89 @@ class FFmpegBuilder
         $this->currentProcessingFile = null;
 
         return $results;
+    }
+
+    /**
+     * Execute peaks-only generation (lightweight, no transcoding)
+     *
+     * @param  string  $path  Output path for peaks JSON file
+     */
+    protected function executePeaksOnly(string $path): bool
+    {
+        $inputFile = $this->inputs[0] ?? null;
+
+        if (! $inputFile) {
+            throw new \RuntimeException('No input file specified. Use fromPath(), fromDisk(), or fromUrl() first.');
+        }
+
+        $action = new \Ritechoice23\FluentFFmpeg\Actions\GenerateAudioPeaks;
+
+        $samplesPerPixel = $this->peaksConfig['samples_per_pixel'] ?? 512;
+        $normalizeRange = $this->peaksConfig['normalize_range'] ?? null;
+
+        $peaksData = $action->execute($inputFile, $samplesPerPixel, $normalizeRange);
+
+        // Determine format
+        $format = $this->peaksConfig['format'] ?? PeaksFormat::SIMPLE->value;
+        $peaksContent = $format === PeaksFormat::FULL->value ? $peaksData : $peaksData['data'];
+
+        $json = json_encode($peaksContent, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \RuntimeException('Failed to encode peaks data as JSON: '.json_last_error_msg());
+        }
+
+        // Handle custom filename if provided
+        $peaksFilename = $this->peaksConfig['peaks_filename'] ?? null;
+        if ($peaksFilename !== null) {
+            if (is_callable($peaksFilename)) {
+                $outputPath = call_user_func($peaksFilename, $path);
+            } else {
+                $outputPath = $peaksFilename;
+            }
+
+            // Validate filename for security
+            $outputPath = $this->validatePeaksFilename($outputPath);
+        } else {
+            $outputPath = $path;
+        }
+
+        $directory = dirname($outputPath);
+        if (! is_dir($directory) && $directory !== '.') {
+            mkdir($directory, 0755, true);
+        }
+
+        if (file_put_contents($outputPath, $json) === false) {
+            throw new \RuntimeException("Failed to write peaks data to file: {$outputPath}");
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate and sanitize peaks filename to prevent directory traversal
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected function validatePeaksFilename(string $filename): string
+    {
+        // Normalize path separators
+        $filename = str_replace('\\', '/', $filename);
+
+        // Remove any directory traversal attempts
+        $filename = str_replace('..', '', $filename);
+
+        // Remove leading slashes for security
+        $filename = ltrim($filename, '/');
+
+        // Validate against strict pattern: alphanumeric, underscore, dash, dot, forward slash
+        if (! preg_match('/^[a-zA-Z0-9_\-\.\/]+$/', $filename)) {
+            throw new \InvalidArgumentException(
+                'Invalid peaks filename. Only alphanumeric characters, underscores, dashes, dots, and forward slashes are allowed.'
+            );
+        }
+
+        return $filename;
     }
 
     /**
