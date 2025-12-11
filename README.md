@@ -6,6 +6,7 @@
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/ritechoice23/laravel-fluent-ffmpeg/run-tests.yml?branch=master&label=tests&style=flat-square)](https://github.com/ritechoice23/laravel-fluent-ffmpeg/actions?query=workflow%3Arun-tests+branch%3Amaster)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/ritechoice23/laravel-fluent-ffmpeg/fix-php-code-style-issues.yml?branch=master&label=code%20style&style=flat-square)](https://github.com/ritechoice23/laravel-fluent-ffmpeg/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amaster)
 [![Total Downloads](https://img.shields.io/packagist/dt/ritechoice23/laravel-fluent-ffmpeg.svg?style=flat-square)](https://packagist.org/packages/ritechoice23/laravel-fluent-ffmpeg)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?style=flat-square)](https://buymeacoffee.com/ritechoice23)
 
 A fluent, chainable API for working with FFmpeg in Laravel applications. Process videos and audio with an elegant, expressive syntax.
 
