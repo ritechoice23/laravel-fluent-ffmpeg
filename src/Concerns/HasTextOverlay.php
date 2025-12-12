@@ -13,8 +13,10 @@ trait HasTextOverlay
 {
     /**
      * Text overlay configuration
+     *
+     * @var array<array{position: string, font_size: int, font_color: string, background_color: string, border_width: int, border_color: string, padding: int, font_file: string|null, duration: int|null, start_time: int}>
      */
-    protected ?array $textOverlay = null;
+    protected array $textOverlays = [];
 
     /**
      * Add text overlay to video
@@ -37,7 +39,7 @@ trait HasTextOverlay
      */
     public function withText(string|callable $text, array $options = []): self
     {
-        $this->textOverlay = [
+        $this->textOverlays[] = [
             'text' => $text,
             'options' => array_merge([
                 'position' => 'bottom-center',
@@ -61,29 +63,35 @@ trait HasTextOverlay
      */
     protected function addTextOverlay(string $videoPath, string $outputPath): void
     {
-        if (! $this->textOverlay) {
+        if ($this->textOverlays === []) {
             copy($videoPath, $outputPath);
 
             return;
         }
 
-        $text = $this->textOverlay['text'];
-        $options = $this->textOverlay['options'];
+        $ffmpeg = FFmpeg::fromPath($videoPath);
 
-        // If text is a callback, call it with the current file being processed
-        if (is_callable($text)) {
-            $currentFile = $this->getCurrentFile() ?? $videoPath;
-            $text = call_user_func($text, $currentFile);
+        foreach ($this->textOverlays as $textOverlay) {
+            $text = $textOverlay['text'];
+            $options = $textOverlay['options'];
+
+            // If text is a callback, call it with the current file being processed
+            if (is_callable($text)) {
+                $currentFile = $this->getCurrentFile() ?? $videoPath;
+                $text = call_user_func($text, $currentFile);
+            }
+
+            // Escape text for FFmpeg
+            $text = $this->escapeDrawText($text);
+
+            // Build drawtext filter
+            $filter = $this->buildDrawTextFilter($text, $options);
+
+            // Add filter
+            $ffmpeg = $ffmpeg->addFilter($filter);
         }
 
-        // Escape text for FFmpeg
-        $text = $this->escapeDrawText($text);
-
-        // Build drawtext filter
-        $filter = $this->buildDrawTextFilter($text, $options);
-
-        FFmpeg::fromPath($videoPath)
-            ->addFilter($filter)
+        $ffmpeg
             ->videoCodec('libx264')
             ->audioCodec('copy')
             ->gopSize(60)
