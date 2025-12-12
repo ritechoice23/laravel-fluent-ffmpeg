@@ -146,7 +146,7 @@ trait HasVideoComposition
         $hasIntro = $this->introPath !== null;
         $hasOutro = $this->outroPath !== null;
         $hasWatermark = $this->watermarkPath !== null;
-        $hasText = $this->textOverlay !== null;
+        $hasText = $this->textOverlays !== [];
 
         // No composition needed
         if (! $hasIntro && ! $hasOutro && ! $hasWatermark && ! $hasText) {

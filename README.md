@@ -114,7 +114,7 @@ FFmpeg::fromPath('audio.mp3')
 -   **Queue Support** - Process videos in background
 -   **Smart Defaults** - Sensible defaults from config
 -   **Events** - Track processing lifecycle
--   **Fully Tested** - 214+ passing tests
+-   **Fully Tested** - 215+ passing tests
 
 ## Documentation
 
