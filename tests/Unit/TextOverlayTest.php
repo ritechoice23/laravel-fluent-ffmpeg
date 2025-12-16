@@ -11,9 +11,9 @@ test('can add text overlay with default options', function () {
 
 test('can add multiple text overlays', function () {
     $builder = FFmpeg::fromPath('input.mp4')
-                     ->withText('Hello World 1')
-                     ->withText('Hello World 2')
-                     ->withText('Hello World 3');
+        ->withText('Hello World 1')
+        ->withText('Hello World 2')
+        ->withText('Hello World 3');
 
     $reflection = new \ReflectionClass($builder);
     $property = $reflection->getProperty('textOverlays');
