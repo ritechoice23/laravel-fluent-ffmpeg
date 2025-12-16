@@ -13,15 +13,21 @@ trait HasTextOverlay
 {
     /**
      * Text overlay configuration
+     *
+     * @var array<array{position: string, font_size: int, font_color: string, background_color: string, border_width: int, border_color: string, padding: int, font_file: string|null, duration: int|null, start_time: int}>
      */
-    protected ?array $textOverlay = null;
+    protected array $textOverlays = [];
 
     /**
      * Add text overlay to video
      *
+     * Multiple text overlays can be added by calling this method multiple times.
+     * Each overlay is rendered in the order added (first added = bottom layer, last added = top layer).
+     *
      * @param  string|callable  $text  Text to display, or callback that receives current file path
      * @param  array  $options  Styling options
-     * @return self
+     *
+     * @throws \RuntimeException If maximum number of overlays (50) is exceeded
      *
      * Options:
      * - position: 'top-left', 'top-center', 'top-right', 'center', 'bottom-left', 'bottom-center', 'bottom-right', or ['x' => int, 'y' => int]
@@ -37,7 +43,11 @@ trait HasTextOverlay
      */
     public function withText(string|callable $text, array $options = []): self
     {
-        $this->textOverlay = [
+        if (count($this->textOverlays) >= 50) {
+            throw new \RuntimeException('Maximum of 50 text overlays allowed. Performance may degrade with too many overlays.');
+        }
+
+        $this->textOverlays[] = [
             'text' => $text,
             'options' => array_merge([
                 'position' => 'bottom-center',
@@ -57,33 +67,80 @@ trait HasTextOverlay
     }
 
     /**
+     * Clear all text overlays
+     */
+    public function clearTextOverlays(): self
+    {
+        $this->textOverlays = [];
+
+        return $this;
+    }
+
+    /**
+     * Remove a specific text overlay by index
+     *
+     * @param  int  $index  Zero-based index of overlay to remove
+     */
+    public function removeTextOverlay(int $index): self
+    {
+        if (isset($this->textOverlays[$index])) {
+            unset($this->textOverlays[$index]);
+            $this->textOverlays = array_values($this->textOverlays); // Re-index array
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get all configured text overlays
+     */
+    public function getTextOverlays(): array
+    {
+        return $this->textOverlays;
+    }
+
+    /**
+     * Get the count of text overlays
+     */
+    public function getTextOverlayCount(): int
+    {
+        return count($this->textOverlays);
+    }
+
+    /**
      * Add text overlay to a video
      */
     protected function addTextOverlay(string $videoPath, string $outputPath): void
     {
-        if (! $this->textOverlay) {
+        if ($this->textOverlays === []) {
             copy($videoPath, $outputPath);
 
             return;
         }
 
-        $text = $this->textOverlay['text'];
-        $options = $this->textOverlay['options'];
+        $ffmpeg = FFmpeg::fromPath($videoPath);
 
-        // If text is a callback, call it with the current file being processed
-        if (is_callable($text)) {
-            $currentFile = $this->getCurrentFile() ?? $videoPath;
-            $text = call_user_func($text, $currentFile);
+        foreach ($this->textOverlays as $textOverlay) {
+            $text = $textOverlay['text'];
+            $options = $textOverlay['options'];
+
+            // If text is a callback, call it with the current file being processed
+            if (is_callable($text)) {
+                $currentFile = $this->getCurrentFile() ?? $videoPath;
+                $text = call_user_func($text, $currentFile);
+            }
+
+            // Escape text for FFmpeg
+            $text = $this->escapeDrawText($text);
+
+            // Build drawtext filter
+            $filter = $this->buildDrawTextFilter($text, $options);
+
+            // Add filter
+            $ffmpeg = $ffmpeg->addFilter($filter);
         }
 
-        // Escape text for FFmpeg
-        $text = $this->escapeDrawText($text);
-
-        // Build drawtext filter
-        $filter = $this->buildDrawTextFilter($text, $options);
-
-        FFmpeg::fromPath($videoPath)
-            ->addFilter($filter)
+        $ffmpeg
             ->videoCodec('libx264')
             ->audioCodec('copy')
             ->gopSize(60)

@@ -9,6 +9,20 @@ test('can add text overlay with default options', function () {
     expect($builder)->toBeInstanceOf(\Ritechoice23\FluentFFmpeg\Builder\FFmpegBuilder::class);
 });
 
+test('can add multiple text overlays', function () {
+    $builder = FFmpeg::fromPath('input.mp4')
+        ->withText('Hello World 1')
+        ->withText('Hello World 2')
+        ->withText('Hello World 3');
+
+    $reflection = new \ReflectionClass($builder);
+    $property = $reflection->getProperty('textOverlays');
+    $property->setAccessible(true);
+
+    expect($builder)->toBeInstanceOf(\Ritechoice23\FluentFFmpeg\Builder\FFmpegBuilder::class);
+    expect($property->getValue($builder))->toHaveCount(3);
+});
+
 test('can add text overlay with custom position', function () {
     $builder = FFmpeg::fromPath('input.mp4')
         ->withText('Hello World', [

@@ -326,35 +326,70 @@ FFmpeg::fromPath('video.mp4')
 
 ### Multiple Text Overlays
 
-For multiple text overlays, chain multiple operations:
+You can add multiple text overlays by calling `withText()` multiple times. Each overlay is rendered in the order added (first = bottom layer, last = top layer):
 
 ```php
-// First pass: Add title
-$tempFile = sys_get_temp_dir() . '/temp_video.mp4';
-
+// Add multiple text overlays in one pass
 FFmpeg::fromPath('input.mp4')
     ->withText('Title', [
         'position' => 'top-center',
+        'font_size' => 36,
+        'font_color' => 'white',
     ])
-    ->save($tempFile);
-
-// Second pass: Add copyright
-FFmpeg::fromPath($tempFile)
+    ->withText('Subtitle', [
+        'position' => 'center',
+        'font_size' => 24,
+        'font_color' => 'yellow',
+    ])
     ->withText('© 2024', [
         'position' => 'bottom-right',
+        'font_size' => 14,
+        'font_color' => 'white@0.7',
     ])
     ->save('output.mp4');
-
-unlink($tempFile);
 ```
 
-Or use the filter API directly:
+**Note:** Maximum of 50 text overlays allowed. Performance may degrade with too many overlays.
+
+### Managing Overlays
+
+```php
+$builder = FFmpeg::fromPath('input.mp4')
+    ->withText('Overlay 1')
+    ->withText('Overlay 2')
+    ->withText('Overlay 3');
+
+// Get count of overlays
+$count = $builder->getTextOverlayCount(); // 3
+
+// Remove specific overlay by index (zero-based)
+$builder->removeTextOverlay(1); // Removes 'Overlay 2'
+
+// Clear all overlays
+$builder->clearTextOverlays();
+
+// Get all overlay configurations
+$overlays = $builder->getTextOverlays();
+```
+
+### Layering and Z-Index
+
+Text overlays are rendered in the order they are added:
 
 ```php
 FFmpeg::fromPath('input.mp4')
-    ->addFilter("drawtext=text='Title':x=(w-text_w)/2:y=20:fontsize=36:fontcolor=white")
-    ->addFilter("drawtext=text='© 2024':x=w-text_w-10:y=h-text_h-10:fontsize=14:fontcolor=white")
+    ->withText('Background Text', [
+        'position' => 'center',
+        'font_size' => 50,
+        'font_color' => 'gray@0.3',
+    ])
+    ->withText('Foreground Text', [
+        'position' => 'center',
+        'font_size' => 30,
+        'font_color' => 'white',
+    ])
     ->save('output.mp4');
+// 'Foreground Text' appears on top of 'Background Text'
 ```
 
 ### Animated Text

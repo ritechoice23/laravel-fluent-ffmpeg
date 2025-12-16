@@ -387,7 +387,7 @@ class FFmpegBuilder
         $this->outputPath = $path;
 
         // Apply intro/outro/watermark/text if specified
-        if ($this->introPath || $this->outroPath || $this->watermarkPath || $this->textOverlay) {
+        if ($this->introPath || $this->outroPath || $this->watermarkPath || $this->textOverlays !== []) {
             $tempOutput = sys_get_temp_dir().'/'.uniqid('ffmpeg_').'_temp.mp4';
             $this->outputPath = $tempOutput;
 
