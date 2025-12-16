@@ -21,9 +21,13 @@ trait HasTextOverlay
     /**
      * Add text overlay to video
      *
+     * Multiple text overlays can be added by calling this method multiple times.
+     * Each overlay is rendered in the order added (first added = bottom layer, last added = top layer).
+     *
      * @param  string|callable  $text  Text to display, or callback that receives current file path
      * @param  array  $options  Styling options
-     * @return self
+     *
+     * @throws \RuntimeException If maximum number of overlays (50) is exceeded
      *
      * Options:
      * - position: 'top-left', 'top-center', 'top-right', 'center', 'bottom-left', 'bottom-center', 'bottom-right', or ['x' => int, 'y' => int]
@@ -39,6 +43,10 @@ trait HasTextOverlay
      */
     public function withText(string|callable $text, array $options = []): self
     {
+        if (count($this->textOverlays) >= 50) {
+            throw new \RuntimeException('Maximum of 50 text overlays allowed. Performance may degrade with too many overlays.');
+        }
+
         $this->textOverlays[] = [
             'text' => $text,
             'options' => array_merge([
@@ -56,6 +64,47 @@ trait HasTextOverlay
         ];
 
         return $this;
+    }
+
+    /**
+     * Clear all text overlays
+     */
+    public function clearTextOverlays(): self
+    {
+        $this->textOverlays = [];
+
+        return $this;
+    }
+
+    /**
+     * Remove a specific text overlay by index
+     *
+     * @param  int  $index  Zero-based index of overlay to remove
+     */
+    public function removeTextOverlay(int $index): self
+    {
+        if (isset($this->textOverlays[$index])) {
+            unset($this->textOverlays[$index]);
+            $this->textOverlays = array_values($this->textOverlays); // Re-index array
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get all configured text overlays
+     */
+    public function getTextOverlays(): array
+    {
+        return $this->textOverlays;
+    }
+
+    /**
+     * Get the count of text overlays
+     */
+    public function getTextOverlayCount(): int
+    {
+        return count($this->textOverlays);
     }
 
     /**

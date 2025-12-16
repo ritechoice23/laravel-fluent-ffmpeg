@@ -80,14 +80,11 @@ FFmpeg::fromDirectory('/path/to/videos')
     ->withWatermark('logo.png', 'top-right')
     ->save('/path/to/output/');
 
-// Add text overlay
+// Add text overlay (supports multiple overlays!)
 FFmpeg::fromPath('video.mp4')
-    ->withText('Copyright 2024', [
-        'position' => 'bottom-right',
-        'font_size' => 24,
-        'font_color' => 'white',
-        'background_color' => 'black@0.5',
-    ])
+    ->withText('Title', ['position' => 'top-center', 'font_size' => 36])
+    ->withText('Subtitle', ['position' => 'center', 'font_size' => 24])
+    ->withText('© 2024', ['position' => 'bottom-right', 'font_size' => 14])
     ->save('output.mp4');
 
 // Generate audio waveforms for visualization
@@ -104,7 +101,7 @@ FFmpeg::fromPath('audio.mp3')
 -   **Audio Waveforms** - Generate waveform data for visualization
 -   **Multi-Clip Extraction** - Extract multiple clips with auto-numbering
 -   **Directory Processing** - Process multiple files from a directory
--   **Text Overlay** - Add styled text with positioning and timing
+-   **Multiple Text Overlays** - Add multiple styled text overlays with positioning and timing
 -   **Video Composition** - Add intro, outro, and watermarks to clips
 -   **20+ Filters** - Effects, transformations, overlays
 -   **Multiple Formats** - MP4, HLS, DASH, GIF, and more
@@ -114,7 +111,7 @@ FFmpeg::fromPath('audio.mp3')
 -   **Queue Support** - Process videos in background
 -   **Smart Defaults** - Sensible defaults from config
 -   **Events** - Track processing lifecycle
--   **Fully Tested** - 215+ passing tests
+-   **Fully Tested** - 228+ passing tests
 
 ## Documentation
 

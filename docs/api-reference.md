@@ -180,6 +180,44 @@ FFmpeg::fromDisk('s3', 'uploads/audio.mp3')
 | `clips(array $clips)`                             | Define multiple clips to extract with format: `[['start' => '00:00:10', 'end' => '00:00:20'], ...]` |
 | `batchClips(array $clips, string $outputPattern)` | Extract multiple clips with custom output pattern using `{n}` placeholder.                          |
 
+## Text Overlay (`HasTextOverlay`)
+
+| Method                                                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `withText(string\|callable $text, array $options = [])` | Add text overlay to video. Can be called multiple times to add up to 50 overlays. Overlays are rendered in order (first = bottom, last = top). Options: `position` (string or `['x' => int, 'y' => int]`), `font_size` (default: 24), `font_color` (default: 'white'), `background_color` (default: 'black@0.5'), `border_width` (default: 0), `border_color` (default: 'black'), `padding` (default: 10), `font_file` (optional), `duration` (null = entire video), `start_time` (default: 0). Throws `RuntimeException` if more than 50 overlays are added. |
+| `clearTextOverlays()`                                   | Remove all text overlays and reset to empty state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `removeTextOverlay(int $index)`                         | Remove a specific text overlay by its zero-based index. Array is automatically re-indexed after removal.                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `getTextOverlays()`                                     | Get array of all configured text overlays with their options.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `getTextOverlayCount()`                                 | Get the total number of configured text overlays (returns int).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+
+### Text Overlay Examples
+
+```php
+// Single overlay
+FFmpeg::fromPath('video.mp4')
+    ->withText('Hello World', ['position' => 'bottom-center'])
+    ->save('output.mp4');
+
+// Multiple overlays
+FFmpeg::fromPath('video.mp4')
+    ->withText('Title', ['position' => 'top-center', 'font_size' => 36])
+    ->withText('Subtitle', ['position' => 'center', 'font_size' => 24])
+    ->withText('© 2024', ['position' => 'bottom-right', 'font_size' => 14])
+    ->save('output.mp4');
+
+// Managing overlays
+$builder = FFmpeg::fromPath('video.mp4')
+    ->withText('Text 1')
+    ->withText('Text 2')
+    ->withText('Text 3');
+
+$count = $builder->getTextOverlayCount(); // 3
+$builder->removeTextOverlay(1); // Remove 'Text 2'
+$builder->clearTextOverlays(); // Remove all
+```
+
+**See also:** [Text Overlay Guide](text-overlay.md)
+
 ## Video Composition (`HasVideoComposition`)
 
 | Method                                                                                       | Description                                                                                         |
